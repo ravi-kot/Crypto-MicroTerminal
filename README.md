@@ -1,42 +1,40 @@
 # Crypto Micro-Terminal
 
 A real-time cryptocurrency prediction system that streams live BTC/ETH price data, computes technical indicators, and predicts next-minute price direction using machine learning. Deployed on Vercel Edge with sub-150ms inference latency and zero local storage requirements.
-<img width="602" height="747" alt="Screenshot 2025-11-14 141635" src="https://github.com/user-attachments/assets/1e8bffc5-b89c-4b45-b6a9-f82100bc0292" />
 
-## Overview
+![Dashboard Screenshot](https://github.com/user-attachments/assets/1e8bffc5-b89c-4b45-b6a9-f82100bc0292)
 
-This project demonstrates a complete end-to-end machine learning system for real-time financial predictions, featuring:
+## What This Is
 
-- Real-time data streaming via Server-Sent Events (SSE)
-- Edge-based ML inference using TensorFlow.js
-- Cloud-first architecture with zero local data storage
-- Production deployment on Vercel Edge Functions
-- Comprehensive telemetry and monitoring
+I built this project to demonstrate a complete end-to-end ML system for real-time financial predictions. It's a full-stack application that combines real-time data streaming, feature engineering, machine learning inference, and a modern web interface - all running on edge infrastructure.
+
+The system streams live crypto prices, computes technical indicators in real-time, and uses a neural network to predict whether the price will go up or down in the next minute. Everything runs on Vercel Edge Functions for low latency, and I designed it to work without any local data storage.
 
 ## Key Features
 
 **Real-Time Data Processing**
-- Live price streaming from CoinGecko API
-- Server-Sent Events (SSE) for low-latency updates
-- Real-time technical indicator computation (RSI, MACD, Bollinger Bands, volatility)
+- Live price streaming from CoinGecko API using Server-Sent Events
+- Real-time computation of technical indicators (RSI, MACD, Bollinger Bands, volatility)
+- Updates every 3 seconds with minimal latency
 
-**Machine Learning Inference**
-- Neural network model (TensorFlow.js) for price direction prediction
-- Sub-150ms inference latency on Vercel Edge
+**Machine Learning**
+- Neural network model running on TensorFlow.js in the browser/edge
 - 11 engineered features including returns, volatility, and momentum indicators
-- Model trained on GPU (Kaggle) for optimal performance
+- Model trained on GPU using Kaggle (free tier)
+- Sub-150ms inference latency on Vercel Edge
 
-**Production Architecture**
-- Edge functions for global low-latency deployment
-- Optional KV storage for telemetry and metrics
-- Zero-download data strategy (all data fetched on-demand)
-- Scalable serverless infrastructure
+**Architecture**
+- Edge functions for global deployment
+- Optional KV storage for telemetry (works without it)
+- Zero-download approach - all data fetched on-demand
+- Serverless and scalable
 
-**Developer Experience**
-- TypeScript throughout for type safety
-- Modular architecture with clear separation of concerns
-- Comprehensive documentation and setup guides
-- Role-adaptable presentation (DS/DA/ML/BA perspectives)
+**Tech Stack**
+- Next.js 14 with App Router
+- TypeScript throughout
+- Tailwind CSS for styling
+- Recharts for visualizations
+- TensorFlow.js for ML inference
 
 ## Architecture
 
@@ -60,333 +58,224 @@ This project demonstrates a complete end-to-end machine learning system for real
                               └──────────────┘
 ```
 
-## Technology Stack
-
-**Frontend**
-- Next.js 14 (App Router)
-- React 18 with TypeScript
-- Tailwind CSS for styling
-- Recharts for data visualization
-
-**Backend**
-- Vercel Edge Functions
-- Server-Sent Events (SSE) for streaming
-- TensorFlow.js for ML inference
-- Vercel KV for optional telemetry storage
-
-**Machine Learning**
-- Neural Network (32→16→8→1 architecture)
-- 11 engineered features
-- Training: Python + TensorFlow/Keras
-- Deployment: TensorFlow.js on Edge
-
-**Data Sources**
-- CoinGecko API (real-time prices)
-- CoinGecko OHLCV API (historical data for training)
-
-## Quick Start
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18 or higher
-- Python 3.8+ (for local training, optional)
-- Vercel account (free tier sufficient)
+- Node.js 18+
+- Python 3.8+ (only if you want to train locally)
+- Vercel account (free tier works fine)
 - Kaggle account (recommended for GPU training)
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repo:
    ```bash
-   git clone https://github.com/your-username/crypto-microterminal.git
-   cd crypto-microterminal
-   ```
-
-2. Install dependencies:
-   ```bash
+   git clone https://github.com/ravi-kot/Crypto-MicroTerminal.git
+   cd Crypto-MicroTerminal
    npm install
    ```
 
-3. Configure environment variables (optional - storage is optional):
+2. Environment variables (optional - the app works without storage):
    ```bash
    cp .env.example .env.local
    ```
    
-   Add Vercel KV credentials if using telemetry:
+   If you want telemetry, add your Vercel KV credentials:
    ```env
    KV_REST_API_URL=your_kv_url
    KV_REST_API_TOKEN=your_kv_token
    ```
 
-4. Train the model:
+3. Train the model:
 
-   **Option A: Kaggle GPU Training (Recommended)**
-   - See [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md) for detailed instructions
-   - Train on large datasets with free GPU access
-   - Download model files and place in `public/` folder
+   I recommend using Kaggle for GPU training - it's free and much faster. See [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md) for the full setup.
 
-   **Option B: Local Training (CPU)**
+   If you want to train locally:
    ```bash
    python scripts/train_nn.py 7
    ```
-   This trains a neural network locally using 7 days of historical data.
 
-5. Run development server:
+4. Run locally:
    ```bash
    npm run dev
    ```
 
-6. Deploy to Vercel:
+5. Deploy to Vercel:
    - Push to GitHub
    - Import project in Vercel dashboard
-   - Deploy (see [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md) for details)
+   - Click deploy (that's it - no env vars needed for basic functionality)
 
-## Data Strategy
+## How It Works
 
-**Zero Local Storage Architecture**
+**Data Flow**
+- Fetches real-time prices from CoinGecko API every 3 seconds
+- Computes technical indicators on the fly (no pre-processing needed)
+- Sends features to the neural network for prediction
+- Displays results in real-time on the dashboard
 
-This project implements a cloud-first approach requiring zero local data storage:
-
-- **Real-time Data**: Fetched on-demand from CoinGecko API (10-50 calls/min free tier)
-- **Training Data**: Fetched on-demand during training (~300KB, processed then discarded)
-- **Model Storage**: Only model weights (~50-200KB) committed to repository
-- **Telemetry**: Optional Vercel KV storage (<5MB for metrics)
-
-**Benefits**
-- No large dataset downloads required
-- Always uses fresh, up-to-date data
-- Minimal storage footprint
-- Scalable cloud infrastructure
-
-## Model Architecture
-
-**Neural Network**
-- Input: 11 engineered features
+**Model**
+- Neural network with 11 input features
 - Architecture: 32 → 16 → 8 → 1 neurons
-- Activation: ReLU (hidden), Sigmoid (output)
-- Regularization: Dropout (0.2-0.3)
-- Total parameters: ~1,000 (lightweight for edge deployment)
+- Trained on 7-365 days of historical BTC data
+- Exported to TensorFlow.js for edge deployment
+- Accuracy: 55-65% (better than random, which is the goal for crypto)
 
-**Features**
-1. Returns: 5s, 15s, 30s, 60s windows
-2. Volatility: 30s and 60s rolling standard deviation
-3. Technical Indicators: RSI(14), MACD
-4. Market Position: Bollinger Bands position
-5. Momentum: Price momentum and volume trends
-
-**Training**
-- Dataset: 7-365 days of BTC OHLCV data
-- Validation split: 80/20
-- Early stopping: Prevents overfitting
-- Learning rate scheduling: Adaptive optimization
-
-**Performance**
-- Accuracy: 55-65% (better than random 50%)
-- Inference latency: <50ms on Vercel Edge
-- Model size: ~50-200KB (gzipped)
+**Features Used**
+1. Returns over 5s, 15s, 30s, 60s windows
+2. Rolling volatility (30s and 60s)
+3. RSI(14) - momentum indicator
+4. MACD - trend indicator
+5. Bollinger Bands position
+6. Price momentum
+7. Volume trends
 
 ## API Endpoints
 
-**Real-Time Streaming**
-- `GET /api/stream` - Server-Sent Events stream of live price ticks and computed indicators
-  - Updates every 3 seconds
-  - Includes: price, returns, volatility, RSI, MACD, Bollinger Bands
-
-**Prediction**
-- `POST /api/predict` - Model inference endpoint
-  - Input: Feature vector (11 features)
-  - Output: Probability and binary label (up/down)
-  - Latency: <150ms end-to-end
-
-**Telemetry**
-- `GET /api/metrics` - Current system metrics and model performance
-  - Returns: accuracy, precision, recall, latency statistics
-  - Optional: Requires KV storage for historical data
-
-**Historical Data**
-- `GET /api/history?hours=24` - Fetch historical price data for charting
-  - Returns: Last N hours of price data from CoinGecko
+- `GET /api/stream` - SSE stream of live prices and indicators
+- `POST /api/predict` - Model inference (takes features, returns probability)
+- `GET /api/metrics` - System metrics (accuracy, latency, etc.)
+- `GET /api/history?hours=24` - Historical price data for charts
 
 ## Project Structure
 
 ```
 crypto-microterminal/
 ├── app/
-│   ├── api/
-│   │   ├── stream/route.ts      # SSE streaming endpoint
-│   │   ├── predict/route.ts     # ML inference endpoint
-│   │   ├── metrics/route.ts     # Telemetry endpoint
-│   │   └── history/route.ts     # Historical data endpoint
-│   ├── page.tsx                 # Main dashboard UI
-│   ├── layout.tsx               # Root layout
-│   └── globals.css              # Global styles
+│   ├── api/              # Edge function endpoints
+│   ├── page.tsx          # Main dashboard
+│   └── layout.tsx
 ├── lib/
-│   ├── features.ts              # Technical indicator computation
-│   ├── model.ts                 # TensorFlow.js model inference
-│   └── kv.ts                    # Vercel KV helpers (optional)
+│   ├── features.ts       # Indicator calculations
+│   ├── model.ts          # TensorFlow.js inference
+│   └── kv.ts             # Storage helpers (optional)
 ├── scripts/
-│   ├── train.py                 # Logistic regression training
-│   └── train_nn.py              # Neural network training
+│   ├── train.py          # Simple LR training
+│   └── train_nn.py       # Neural network training
 ├── kaggle/
-│   ├── train_model.py           # Kaggle GPU training script
-│   └── KAGGLE_SETUP.md          # Kaggle setup guide
-├── public/
-│   ├── model/                   # TensorFlow.js model files
-│   └── scaler-params.json       # Feature scaling parameters
-├── DEPLOYMENT_NO_STORAGE.md     # Simplified deployment guide
-├── VERCEL_DEPLOYMENT.md         # Complete deployment guide
-└── README.md                    # This file
+│   └── train_model.py    # GPU training script
+└── public/
+    └── model/            # TensorFlow.js model files
 ```
 
-## Configuration
+## Training the Model
 
-### Vercel KV Setup (Optional)
+I trained the model on Kaggle using their free GPU. The script fetches historical data from CoinGecko, computes features, and trains a neural network. Then it exports everything to TensorFlow.js format so it can run on the edge.
 
-Storage is optional - the application works without it. To enable telemetry:
-
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Navigate to Storage → Create Database → KV (or use Upstash from Marketplace)
-3. Copy connection strings to environment variables
-4. Redeploy application
-
-### Model Training
-
-**Kaggle GPU Training (Recommended)**
-- See [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md)
+**Kaggle Training (Recommended)**
 - Free GPU access (T4 x2)
-- Train on large datasets (365+ days)
-- Export to TensorFlow.js format
+- Much faster than CPU training
+- See [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md) for details
 
 **Local Training**
 ```bash
-# Install dependencies
 pip install tensorflow tensorflowjs scikit-learn numpy requests
-
-# Train neural network
 python scripts/train_nn.py 7
-
-# Model files will be created in public/
 ```
 
-## Metrics and Monitoring
-
-**Tracked Metrics** (when storage is enabled)
-- Prediction accuracy and precision/recall
-- Average inference latency
-- System uptime and error rates
-- Rolling performance statistics
-
-**Access Metrics**
-- API endpoint: `/api/metrics`
-- Returns JSON with current statistics
-- Updates in real-time as predictions are made
+The model files will be created in `public/` and automatically used by the app.
 
 ## Deployment
 
-**Vercel Deployment**
+I deployed this on Vercel - it's super simple:
 
 1. Push code to GitHub
-2. Import project in Vercel dashboard
-3. Configure build settings (auto-detected for Next.js)
-4. Deploy (no environment variables required for basic functionality)
+2. Import project in Vercel
+3. Deploy (no configuration needed)
 
-See [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md) for simplified deployment steps.
+The app works without any environment variables. Storage is optional - I added it for telemetry, but the core functionality (predictions, streaming, charts) works perfectly without it.
 
-**Environment Variables** (Optional)
-- `KV_REST_API_URL` - Vercel KV connection URL
-- `KV_REST_API_TOKEN` - Vercel KV authentication token
+See [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md) for the quick deployment guide.
 
-## Role Adaptation
+## Design Decisions
 
-The codebase can be presented from different professional perspectives:
+**Why Edge Functions?**
+- Low latency (predictions in <150ms)
+- Global deployment
+- No cold starts with this model size
+- Free tier is generous
 
-**Data Scientist**
-- Feature engineering and selection
-- Model architecture and hyperparameter tuning
-- Performance metrics and diagnostics
-- A/B testing framework
+**Why TensorFlow.js?**
+- Runs in browser and edge runtime
+- No server-side GPU needed for inference
+- Model is small enough (~200KB) to load quickly
+- Works seamlessly with Next.js
 
-**Data Analyst**
-- Business KPIs and trend analysis
-- Correlation and pattern identification
-- Data visualization and reporting
-- Statistical significance testing
+**Why No Local Storage?**
+- I wanted to demonstrate cloud-first architecture
+- No need to download GBs of historical data
+- Always uses fresh, real-time data
+- Easier to deploy and share
 
-**ML Engineer**
-- Model deployment and serving
-- Edge inference optimization
-- Latency and performance monitoring
-- Model versioning and CI/CD
+**Why Neural Network over Logistic Regression?**
+- Better accuracy (55-65% vs ~50%)
+- More impressive for portfolio
+- Still fast enough for edge deployment
+- Shows ML engineering skills
 
-**Business Analyst**
-- ROI and profitability analysis
-- Risk metrics and scenario planning
-- Executive dashboards
-- Strategy backtesting
+## Performance
 
-## Performance Characteristics
-
-**Latency**
-- Edge inference: <50ms
+- Inference latency: <50ms on edge
 - End-to-end prediction: <150ms
-- Real-time streaming: 3-second updates
+- Model size: ~200KB (gzipped)
+- Memory usage: <100MB per function
+- Real-time updates: Every 3 seconds
 
-**Scalability**
-- Serverless architecture scales automatically
-- Edge functions deployed globally
-- No database bottlenecks (stateless design)
+## What I Learned
 
-**Resource Usage**
-- Model size: 50-200KB
-- Memory: <100MB per function
-- Storage: <5MB (optional telemetry)
+Building this project taught me a lot about:
+- Edge computing and serverless architecture
+- Real-time data streaming with SSE
+- Deploying ML models to production
+- Optimizing for low latency
+- Cloud-first design patterns
+
+## Future Improvements
+
+If I were to continue this project, I'd add:
+- Multi-asset support (ETH, SOL, etc.)
+- Sentiment analysis from social media
+- More sophisticated models (LSTM, transformers)
+- Automated model retraining
+- WebSocket for even lower latency
 
 ## Documentation
 
-- [ROADMAP.md](./ROADMAP.md) - Detailed development roadmap
-- [MINDMAP.md](./MINDMAP.md) - Visual architecture diagrams
-- [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) - Complete deployment guide
-- [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md) - Simplified deployment
+- [ROADMAP.md](./ROADMAP.md) - Development roadmap
+- [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) - Full deployment guide
+- [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md) - Quick deployment
 - [TRAINING.md](./TRAINING.md) - Model training guide
-- [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md) - Kaggle GPU training setup
+- [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md) - Kaggle GPU setup
 
-## Technical Highlights
+## Tech Stack
 
-**Edge Computing**
-- Deployed on Vercel Edge Functions for global low-latency
-- TensorFlow.js runs efficiently in Edge runtime
-- No cold start issues with optimized model size
+**Frontend**
+- Next.js 14 (App Router)
+- React 18 + TypeScript
+- Tailwind CSS
+- Recharts
 
-**Real-Time Processing**
-- Server-Sent Events for efficient one-way streaming
-- In-memory indicator computation
-- Minimal latency between data and predictions
+**Backend**
+- Vercel Edge Functions
+- Server-Sent Events
+- TensorFlow.js
 
-**Cloud-First Design**
-- Zero local storage requirements
-- All data fetched on-demand
-- Stateless architecture for horizontal scaling
+**ML**
+- Python + TensorFlow/Keras (training)
+- TensorFlow.js (inference)
+- Scikit-learn (preprocessing)
 
-**Production Ready**
-- Error handling and graceful degradation
-- Optional telemetry for monitoring
-- Type-safe TypeScript implementation
-- Comprehensive documentation
+**Data**
+- CoinGecko API
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT
 
 ## Acknowledgments
 
-- CoinGecko for providing free cryptocurrency API access
-- Vercel for hosting infrastructure and Edge Functions
-- TensorFlow.js team for edge ML capabilities
-- Kaggle for free GPU compute resources
-
-## Contact
-
-For questions or feedback, please open an issue on GitHub.
+Thanks to CoinGecko for the free API, Vercel for the hosting platform, and Kaggle for free GPU compute. This project wouldn't be possible without these tools.
 
 ---
 
-Built with modern web technologies and production best practices. Suitable for portfolio demonstration, technical interviews, and learning advanced full-stack ML systems.
+This project demonstrates my ability to build end-to-end ML systems, work with modern web technologies, and deploy production-ready applications. Feel free to check out the code and let me know if you have any questions!
