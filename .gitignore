@@ -45,3 +45,12 @@ venv/
 env/
 ENV/
 
+# model files (large, but we want to commit them)
+# Uncomment if model files are too large for GitHub
+# /public/model/
+# /public/scaler-params.json
+
+# kaggle outputs (download these manually)
+kaggle/model/
+kaggle/*.json
+kaggle/*.h5

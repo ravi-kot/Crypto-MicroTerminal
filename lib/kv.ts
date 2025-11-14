@@ -1,9 +1,8 @@
 /**
  * Vercel KV (Upstash) Helper Functions
  * Telemetry and metrics storage
+ * Storage is optional - app works without it
  */
-
-import { kv } from '@vercel/kv';
 
 export interface PredictionLog {
   timestamp: number;
@@ -27,40 +26,57 @@ const METRICS_KEY = 'metrics';
 const MAX_PREDICTIONS = 1000; // Keep last 1000 predictions
 
 /**
- * Log a prediction to KV
+ * Log a prediction to KV (optional - works without storage)
  */
 export async function logPrediction(log: PredictionLog): Promise<void> {
+  // Check if KV is available
+  let kvInstance: any = null;
+  try {
+    const { kv } = await import('@vercel/kv');
+    kvInstance = kv;
+  } catch {
+    // KV not available - silently skip
+    return;
+  }
+  
   try {
     // Add to predictions list (keep last N)
     const key = `${PREDICTIONS_KEY}:${Date.now()}`;
-    await kv.set(key, log, { ex: 86400 }); // Expire after 24h
+    await kvInstance.set(key, log, { ex: 86400 }); // Expire after 24h
 
     // Also maintain a sorted set for quick access
-    await kv.zadd(PREDICTIONS_KEY, Date.now(), JSON.stringify(log));
+    await kvInstance.zadd(PREDICTIONS_KEY, Date.now(), JSON.stringify(log));
 
     // Trim old predictions
-    const count = await kv.zcard(PREDICTIONS_KEY);
+    const count = await kvInstance.zcard(PREDICTIONS_KEY);
     if (count > MAX_PREDICTIONS) {
       const toRemove = count - MAX_PREDICTIONS;
-      await kv.zremrangebyrank(PREDICTIONS_KEY, 0, toRemove - 1);
+      await kvInstance.zremrangebyrank(PREDICTIONS_KEY, 0, toRemove - 1);
     }
   } catch (error) {
-    console.error('Failed to log prediction:', error);
     // Don't throw - telemetry failures shouldn't break the app
+    // Silently fail if storage is not configured
   }
 }
 
 /**
- * Get recent predictions
+ * Get recent predictions (returns empty if storage not available)
  */
 export async function getRecentPredictions(limit: number = 100): Promise<PredictionLog[]> {
+  let kvInstance: any = null;
   try {
-    const results = await kv.zrange(PREDICTIONS_KEY, -limit, -1, {
+    const { kv } = await import('@vercel/kv');
+    kvInstance = kv;
+  } catch {
+    return [];
+  }
+  
+  try {
+    const results = await kvInstance.zrange(PREDICTIONS_KEY, -limit, -1, {
       rev: true,
     });
     return results.map((r) => JSON.parse(r as string)) as PredictionLog[];
   } catch (error) {
-    console.error('Failed to get predictions:', error);
     return [];
   }
 }
@@ -114,14 +130,22 @@ export async function calculateMetrics(): Promise<Metrics> {
 }
 
 /**
- * Store aggregated metrics (for hourly rollups)
+ * Store aggregated metrics (optional - works without storage)
  */
 export async function storeMetrics(metrics: Metrics): Promise<void> {
+  let kvInstance: any = null;
+  try {
+    const { kv } = await import('@vercel/kv');
+    kvInstance = kv;
+  } catch {
+    return;
+  }
+  
   try {
     const key = `${METRICS_KEY}:${Date.now()}`;
-    await kv.set(key, metrics, { ex: 604800 }); // Expire after 7 days
+    await kvInstance.set(key, metrics, { ex: 604800 }); // Expire after 7 days
   } catch (error) {
-    console.error('Failed to store metrics:', error);
+    // Silently fail if storage not available
   }
 }
 

@@ -37,8 +37,9 @@ A **real-time crypto micro-terminal** that streams BTC/ETH ticks, computes light
 ### Prerequisites
 
 - Node.js 18+
-- Python 3.8+ (for training)
+- Python 3.8+ (for local training, optional)
 - Vercel account (free tier works)
+- Kaggle account (for GPU training, recommended)
 
 ### Installation
 
@@ -58,12 +59,19 @@ A **real-time crypto micro-terminal** that streams BTC/ETH ticks, computes light
    KV_REST_API_TOKEN=your_kv_token
    ```
 
-3. **Train the model** (optional, default weights included):
+3. **Train the model** (recommended: use Kaggle GPU):
+   
+   **Option A: Kaggle GPU Training (Recommended)**
+   - See [kaggle/KAGGLE_SETUP.md](./kaggle/KAGGLE_SETUP.md) for detailed instructions
+   - Train on large datasets with free GPU
+   - Download model files and place in `public/` folder
+   
+   **Option B: Local Training (CPU)**
    ```bash
-   python scripts/train.py
+   python scripts/train_nn.py 7
    ```
    
-   This fetches 48h of data from CoinGecko on-demand, trains a logistic regression model, and exports weights to `public/weights-lr.json`.
+   This trains a neural network locally (slower, but works).
 
 4. **Run development server**:
    ```bash

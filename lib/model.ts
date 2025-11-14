@@ -1,125 +1,156 @@
 /**
- * Model Inference Library
- * Pure TypeScript logistic regression inference
+ * Neural Network Model Inference Library
+ * Uses TensorFlow.js for edge inference
  */
 
-interface ModelWeights {
+import * as tf from '@tensorflow/tfjs';
+
+interface ScalerParams {
   mean: number[];
   std: number[];
-  coeffs: number[];
-  bias: number;
+  feature_count: number;
 }
 
-// Default weights (will be replaced by actual trained model)
-const DEFAULT_WEIGHTS: ModelWeights = {
-  mean: [0, 0, 0, 0, 50, 0],
-  std: [1, 1, 1, 1, 15, 1],
-  coeffs: [0.1, 0.1, 0.1, 0.05, -0.01, 0.05],
-  bias: 0.0,
-};
-
-let cachedWeights: ModelWeights | null = null;
+let model: tf.LayersModel | null = null;
+let scalerParams: ScalerParams | null = null;
+let modelLoading = false;
 
 /**
- * Load model weights (with caching)
+ * Load TensorFlow.js model (with caching)
  */
-async function loadWeights(): Promise<ModelWeights> {
-  if (cachedWeights) return cachedWeights;
-
-  try {
-    // Try to load from public folder
-    const response = await fetch('/weights-lr.json', { cache: 'no-store' });
-    if (response.ok) {
-      cachedWeights = await response.json();
-      return cachedWeights!;
+async function loadModel(): Promise<tf.LayersModel> {
+  if (model) return model;
+  if (modelLoading) {
+    // Wait for ongoing load
+    while (modelLoading) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-  } catch (error) {
-    console.warn('Failed to load weights, using defaults:', error);
+    if (model) return model;
   }
 
-  return DEFAULT_WEIGHTS;
+  modelLoading = true;
+  try {
+    // Load model from public folder
+    model = await tf.loadLayersModel('/model/model.json');
+    console.log('✅ Neural network model loaded');
+  } catch (error) {
+    console.warn('Failed to load TensorFlow.js model, using fallback:', error);
+    // Fallback: create a simple model (for development)
+    model = createFallbackModel();
+  } finally {
+    modelLoading = false;
+  }
+
+  return model!;
 }
 
 /**
- * Sigmoid activation function
+ * Create a simple fallback model if TensorFlow.js model fails to load
  */
-function sigmoid(z: number): number {
-  // Clamp to prevent overflow
-  const clamped = Math.max(-500, Math.min(500, z));
-  return 1 / (1 + Math.exp(-clamped));
+function createFallbackModel(): tf.LayersModel {
+  const fallback = tf.sequential({
+    layers: [
+      tf.layers.dense({ inputShape: [11], units: 16, activation: 'relu' }),
+      tf.layers.dense({ units: 8, activation: 'relu' }),
+      tf.layers.dense({ units: 1, activation: 'sigmoid' }),
+    ],
+  });
+  return fallback;
 }
 
 /**
- * Standardize a single feature value
+ * Load scaler parameters
  */
-function standardize(value: number, mean: number, std: number): number {
-  if (std === 0) return 0;
-  return (value - mean) / std;
+async function loadScaler(): Promise<ScalerParams> {
+  if (scalerParams) return scalerParams;
+
+  try {
+    const response = await fetch('/scaler-params.json', { cache: 'no-store' });
+    if (response.ok) {
+      scalerParams = await response.json();
+      return scalerParams!;
+    }
+  } catch (error) {
+    console.warn('Failed to load scaler params:', error);
+  }
+
+  // Fallback: return default scaler
+  return {
+    mean: new Array(11).fill(0),
+    std: new Array(11).fill(1),
+    feature_count: 11,
+  };
 }
 
 /**
- * Predict probability of upward movement
- * @param features Feature vector: [r5, r15, r30, vol30, rsi14, macd]
+ * Standardize features
+ */
+function standardizeFeatures(features: number[], scaler: ScalerParams): number[] {
+  return features.map((val, idx) => {
+    const mean = scaler.mean[idx] || 0;
+    const std = scaler.std[idx] || 1;
+    return std === 0 ? 0 : (val - mean) / std;
+  });
+}
+
+/**
+ * Predict probability of upward movement using neural network
+ * @param features Enhanced feature vector: [r5, r15, r30, r60, vol30, vol60, rsi14, macd, bb_position, price_momentum, volume_trend]
  * @returns Prediction with probability and label
  */
 export async function predict(features: number[]): Promise<{
   prob: number;
   label: number;
 }> {
-  const weights = await loadWeights();
+  try {
+    // Load model and scaler
+    const [tfModel, scaler] = await Promise.all([loadModel(), loadScaler()]);
 
-  // Validate feature length
-  if (features.length !== weights.coeffs.length) {
-    throw new Error(
-      `Feature length mismatch: expected ${weights.coeffs.length}, got ${features.length}`
-    );
+    // Validate feature length
+    if (features.length !== scaler.feature_count) {
+      console.warn(
+        `Feature length mismatch: expected ${scaler.feature_count}, got ${features.length}. Padding/truncating.`
+      );
+      // Pad or truncate features
+      if (features.length < scaler.feature_count) {
+        features = [...features, ...new Array(scaler.feature_count - features.length).fill(0)];
+      } else {
+        features = features.slice(0, scaler.feature_count);
+      }
+    }
+
+    // Standardize features
+    const standardized = standardizeFeatures(features, scaler);
+
+    // Convert to tensor
+    const input = tf.tensor2d([standardized]);
+
+    // Predict
+    const prediction = tfModel.predict(input) as tf.Tensor;
+    const prob = (await prediction.data())[0];
+    
+    // Cleanup
+    input.dispose();
+    prediction.dispose();
+
+    const label = prob > 0.5 ? 1 : 0;
+
+    return { prob, label };
+  } catch (error) {
+    console.error('Prediction error:', error);
+    // Fallback: return neutral prediction
+    return { prob: 0.5, label: 0 };
   }
-
-  // Standardize features and compute dot product
-  let z = weights.bias;
-  for (let i = 0; i < features.length; i++) {
-    const standardized = standardize(
-      features[i],
-      weights.mean[i] || 0,
-      weights.std[i] || 1
-    );
-    z += standardized * weights.coeffs[i];
-  }
-
-  // Apply sigmoid
-  const prob = sigmoid(z);
-  const label = prob > 0.5 ? 1 : 0;
-
-  return { prob, label };
 }
 
 /**
- * Synchronous version (for Edge runtime where async fetch might be limited)
- * Requires weights to be passed in
+ * Check if model is loaded
  */
-export function predictSync(features: number[], weights: ModelWeights): {
-  prob: number;
-  label: number;
-} {
-  if (features.length !== weights.coeffs.length) {
-    throw new Error(
-      `Feature length mismatch: expected ${weights.coeffs.length}, got ${features.length}`
-    );
+export async function isModelReady(): Promise<boolean> {
+  try {
+    await loadModel();
+    return model !== null;
+  } catch {
+    return false;
   }
-
-  let z = weights.bias;
-  for (let i = 0; i < features.length; i++) {
-    const standardized = standardize(
-      features[i],
-      weights.mean[i] || 0,
-      weights.std[i] || 1
-    );
-    z += standardized * weights.coeffs[i];
-  }
-
-  const prob = sigmoid(z);
-  const label = prob > 0.5 ? 1 : 0;
-
-  return { prob, label };
 }
-

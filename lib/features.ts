@@ -143,7 +143,32 @@ export function calculateMACD(
 }
 
 /**
- * Compute all indicators from state
+ * Calculate Bollinger Bands position (normalized)
+ */
+export function calculateBollingerPosition(
+  prices: number[],
+  window: number = 20,
+  numStd: number = 2
+): number {
+  if (prices.length < window) return 0.5; // Neutral position
+
+  const recent = prices.slice(-window);
+  const sma = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const variance = recent.reduce((sum, p) => sum + Math.pow(p - sma, 2), 0) / recent.length;
+  const std = Math.sqrt(variance);
+  
+  if (std === 0) return 0.5;
+  
+  const upper = sma + (std * numStd);
+  const lower = sma - (std * numStd);
+  const currentPrice = prices[prices.length - 1];
+  
+  // Normalized position: 0 = at lower band, 1 = at upper band
+  return (currentPrice - lower) / (upper - lower);
+}
+
+/**
+ * Compute all indicators from state (enhanced features for neural network)
  */
 export function computeIndicators(
   state: IndicatorState,
@@ -159,12 +184,20 @@ export function computeIndicators(
   rsi14: number;
   macd: number;
   signal: number;
+  bbPosition: number;
+  priceMomentum: number;
+  volumeTrend: number;
 } {
   const returns = calculateReturns(state.prices, state.timestamps, currentTime);
   const vol30 = calculateVolatility(state.prices, state.timestamps, 30000, currentTime);
   const vol60 = calculateVolatility(state.prices, state.timestamps, 60000, currentTime);
   const rsi14 = calculateRSI(state.prices, 14);
   const { macd, signal } = calculateMACD(state, currentPrice);
+  
+  // Enhanced features
+  const bbPosition = calculateBollingerPosition(state.prices, 20, 2);
+  const priceMomentum = returns.r15 || 0; // Use 15s return as momentum proxy
+  const volumeTrend = 0; // Volume not available in current stream, set to 0
 
   return {
     ...returns,
@@ -173,6 +206,9 @@ export function computeIndicators(
     rsi14,
     macd,
     signal,
+    bbPosition,
+    priceMomentum,
+    volumeTrend,
   };
 }
 
