@@ -1,4 +1,4 @@
-# Deployment Checklist ✅
+# Deployment Checklist
 
 Use this checklist before deploying to Vercel.
 
@@ -16,14 +16,14 @@ Use this checklist before deploying to Vercel.
 
 - [ ] Vercel account created
 - [ ] GitHub connected to Vercel
-- [ ] Vercel KV database created
-- [ ] KV credentials copied (`KV_REST_API_URL`, `KV_REST_API_TOKEN`)
+- [ ] Vercel KV database created (optional)
+- [ ] KV credentials copied (optional)
 
-## Environment Variables
+## Environment Variables (Optional)
 
-- [ ] `KV_REST_API_URL` set in Vercel
-- [ ] `KV_REST_API_TOKEN` set in Vercel
-- [ ] Variables set for Production, Preview, and Development
+- [ ] `KV_REST_API_URL` set in Vercel (optional)
+- [ ] `KV_REST_API_TOKEN` set in Vercel (optional)
+- [ ] Variables set for Production, Preview, and Development (if using storage)
 
 ## Model Files (Optional)
 
@@ -43,7 +43,7 @@ Use this checklist before deploying to Vercel.
 ## Deployment
 
 - [ ] Project imported to Vercel
-- [ ] Environment variables added
+- [ ] Environment variables added (if using storage)
 - [ ] Deployment triggered
 - [ ] Build completed successfully
 - [ ] Site is live and accessible
@@ -66,7 +66,7 @@ Use this checklist before deploying to Vercel.
 - [ ] Live URL documented
 - [ ] GitHub repo is public (or shared with team)
 
-## 🎉 Ready to Share!
+## Ready to Share!
 
 - [ ] Live URL: `https://your-app.vercel.app`
 - [ ] GitHub repo: `https://github.com/your-username/your-repo`
@@ -77,4 +77,4 @@ Use this checklist before deploying to Vercel.
 **Quick Reference:**
 - Full guide: [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
 - Quick start: [DEPLOYMENT_QUICKSTART.md](./DEPLOYMENT_QUICKSTART.md)
-
+- No storage: [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md)

@@ -1,8 +1,8 @@
-# Quick Deployment Guide ⚡
+# Quick Deployment Guide
 
-**5-minute deployment to Vercel**
+5-minute deployment to Vercel
 
-## 🚀 Quick Steps
+## Quick Steps
 
 ### 1. Push to GitHub
 ```bash
@@ -15,33 +15,22 @@ git push origin main
 - Go to [vercel.com](https://vercel.com)
 - Sign up with GitHub
 
-### 3. Create KV Database
-- Dashboard → **Storage** → **Create Database** → **KV**
-- Copy `KV_REST_API_URL` and `KV_REST_API_TOKEN`
-
-### 4. Import Project
-- Dashboard → **Add New** → **Project**
+### 3. Import Project
+- Dashboard → Add New → Project
 - Select your GitHub repo
-- Click **Import**
+- Click Import
 
-### 5. Add Environment Variables
-- Project → **Settings** → **Environment Variables**
-- Add:
-  ```
-  KV_REST_API_URL = (from step 3)
-  KV_REST_API_TOKEN = (from step 3)
-  ```
-
-### 6. Deploy!
-- Click **Deploy**
+### 4. Deploy!
+- Click Deploy
 - Wait 2-3 minutes
-- Click **Visit** when ready
+- Click Visit when ready
 
-## ✅ Done!
+## Done!
 
 Your app is live at: `https://your-app.vercel.app`
 
+No environment variables needed - the app works without storage!
+
 ---
 
-**Need detailed instructions?** See [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
-
+**Need detailed instructions?** See [DEPLOYMENT_NO_STORAGE.md](./DEPLOYMENT_NO_STORAGE.md) or [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)

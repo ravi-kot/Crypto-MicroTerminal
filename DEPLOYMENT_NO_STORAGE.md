@@ -1,22 +1,22 @@
-# Deploy to Vercel (No Storage Required) 🚀
+# Deploy to Vercel (No Storage Required)
 
-Simplified deployment guide - **no database setup needed!**
+Simplified deployment guide - no database setup needed!
 
-## ✅ What Works Without Storage
+## What Works Without Storage
 
-- ✅ Real-time price streaming
-- ✅ Live predictions
-- ✅ Interactive charts
-- ✅ All UI features
-- ⚠️ Metrics endpoint returns empty data (but doesn't break)
+- Real-time price streaming
+- Live predictions
+- Interactive charts
+- All UI features
+- Metrics endpoint returns empty data (but doesn't break)
 
-## 🚀 Quick Deployment Steps
+## Quick Deployment Steps
 
 ### Step 1: Push to GitHub
 
 ```bash
 git add .
-git commit -m "Ready for Vercel deployment (no storage)"
+git commit -m "Ready for Vercel deployment"
 git push origin main
 ```
 
@@ -27,46 +27,42 @@ git push origin main
 
 ### Step 3: Import Project
 
-1. Vercel Dashboard → **"Add New..."** → **"Project"**
+1. Vercel Dashboard → "Add New..." → "Project"
 2. Find your GitHub repository
-3. Click **"Import"**
+3. Click "Import"
 
 ### Step 4: Configure Project
 
-- **Framework Preset**: Next.js (auto-detected)
-- **Root Directory**: `./` (default)
-- **Build Command**: `npm run build` (default)
-- **Output Directory**: `.next` (default)
-- **Install Command**: `npm install` (default)
+- Framework Preset: Next.js (auto-detected)
+- Root Directory: `./` (default)
+- Build Command: `npm run build` (default)
+- Output Directory: `.next` (default)
+- Install Command: `npm install` (default)
 
 **No environment variables needed!** Skip that step.
 
 ### Step 5: Deploy!
 
-1. Click **"Deploy"**
+1. Click "Deploy"
 2. Wait 2-3 minutes
-3. Click **"Visit"** when ready
+3. Click "Visit" when ready
 
-## ✅ Done!
+## Done!
 
 Your app is live at: `https://your-app.vercel.app`
 
-**That's it!** No database setup, no environment variables, no configuration needed.
+That's it! No database setup, no environment variables, no configuration needed.
 
----
+## Notes
 
-## 📝 Notes
-
-- **Metrics endpoint** (`/api/metrics`) will return empty data but won't break
-- **Predictions** work perfectly without storage
-- **Real-time streaming** works perfectly
-- **Charts** work perfectly
+- Metrics endpoint (`/api/metrics`) will return empty data but won't break
+- Predictions work perfectly without storage
+- Real-time streaming works perfectly
+- Charts work perfectly
 
 Storage is only for telemetry/metrics tracking, which is optional for a demo.
 
----
-
-## 🔄 Adding Storage Later (Optional)
+## Adding Storage Later (Optional)
 
 If you want to add metrics tracking later:
 
@@ -78,13 +74,10 @@ If you want to add metrics tracking later:
 
 The code already supports it - just add the credentials!
 
----
+## Success!
 
-## 🎉 Success!
-
-Your Crypto Micro-Terminal is now live on Vercel! 🚀
+Your Crypto Micro-Terminal is now live on Vercel!
 
 **Share your deployment:**
 - Live URL: `https://your-app.vercel.app`
 - GitHub repo: `https://github.com/your-username/your-repo`
-

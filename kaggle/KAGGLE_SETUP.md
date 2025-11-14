@@ -1,13 +1,15 @@
 # Kaggle GPU Training Setup
 
-## 🚀 Quick Start
+How I trained the model on Kaggle using their free GPU.
+
+## Quick Start
 
 ### Step 1: Create Kaggle Notebook
 
 1. Go to [Kaggle.com](https://www.kaggle.com)
 2. Click "New Notebook"
-3. **Enable GPU**: Settings → Accelerator → GPU T4 x2 (free tier)
-4. Upload `train_model.py` or copy-paste the code
+3. Enable GPU: Settings → Accelerator → GPU T4 x2 (free tier)
+4. Copy the code from `train_model.py` into your notebook
 
 ### Step 2: Add Dataset
 
@@ -15,11 +17,13 @@
 1. Click "Add Data" in notebook
 2. Search for "Cryptocurrency Historical Prices" or similar
 3. Add dataset to notebook
-4. Update file path in `train_model.py` if needed
+4. Update file path in the script if needed
 
 **Option B: Use CoinGecko API (No dataset needed)**
 - The script will automatically fetch data if Kaggle dataset not found
-- Uses 365 days of historical data
+- Uses 365 days of historical data from CoinGecko
+
+I used Option B because it's simpler and doesn't require finding the right dataset.
 
 ### Step 3: Install Dependencies
 
@@ -30,10 +34,13 @@ In Kaggle notebook, add this cell:
 
 ### Step 4: Run Training
 
-```python
-# Copy the entire train_model.py code into a cell and run
-# Or import it if you uploaded as a file
-```
+Copy the entire `train_model.py` code into a cell and run it. The script will:
+- Fetch historical data
+- Create features
+- Train the neural network
+- Export to TensorFlow.js format
+
+Training takes 5-15 minutes on GPU (vs hours on CPU).
 
 ### Step 5: Download Model Files
 
@@ -49,22 +56,22 @@ After training completes, download:
 3. Commit to GitHub
 4. Deploy to Vercel
 
-## 📊 Expected Results
+## Expected Results
 
 With GPU training on large dataset:
-- **Training time**: 5-15 minutes (vs hours on CPU)
-- **Accuracy**: 60-70% (better than 50/50)
-- **Model size**: ~100-200KB (still lightweight)
-- **Inference**: <50ms on Edge
+- Training time: 5-15 minutes (vs hours on CPU)
+- Accuracy: 60-70% (better than 50/50)
+- Model size: ~100-200KB (still lightweight)
+- Inference: <50ms on Edge
 
-## 🎯 Tips
+## Tips
 
-1. **Use GPU**: Makes training 10-100x faster
-2. **More data**: Use 365+ days for better accuracy
-3. **Monitor**: Watch validation metrics to avoid overfitting
-4. **Export**: Always download model files before closing notebook
+1. Use GPU: Makes training 10-100x faster
+2. More data: Use 365+ days for better accuracy
+3. Monitor: Watch validation metrics to avoid overfitting
+4. Export: Always download model files before closing notebook
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 **GPU not available?**
 - Check if GPU is enabled in notebook settings
@@ -75,10 +82,10 @@ With GPU training on large dataset:
 - Use less data (365 days → 180 days)
 
 **Model too large?**
-- Reduce model size (64→32→16→8 instead of 64→32→16→8)
 - The script already uses a compact architecture
+- If needed, reduce model size in the script
 
-## 📝 Kaggle Notebook Template
+## Kaggle Notebook Template
 
 ```python
 # Cell 1: Install dependencies
@@ -91,7 +98,7 @@ With GPU training on large dataset:
 model, scaler = train_model()
 ```
 
-## 🎉 After Training
+## After Training
 
 1. Download all output files
 2. Extract `model/` folder
@@ -104,5 +111,4 @@ model, scaler = train_model()
 5. Commit and push to GitHub
 6. Deploy to Vercel
 
-Your model will now run on Vercel Edge with fast inference! 🚀
-
+Your model will now run on Vercel Edge with fast inference!
