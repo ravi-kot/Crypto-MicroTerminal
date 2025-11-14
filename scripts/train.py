@@ -15,16 +15,23 @@ import time
 # CoinGecko API (free, no auth required)
 COINGECKO_API = "https://api.coingecko.com/api/v3"
 
-def fetch_ohlcv(coin_id="bitcoin", days=1):
+def fetch_ohlcv(coin_id="bitcoin", days=1, max_retries=3):
     """
-    Fetch OHLCV data from CoinGecko
+    Fetch OHLCV data from CoinGecko with retry logic for rate limits
     Returns: list of [timestamp, open, high, low, close, volume]
     
     Note: CoinGecko OHLC endpoint only accepts specific days values:
     1, 7, 14, 30, 90, 180, 365, or "max"
+    
+    Candle intervals:
+    - days=1: 5-minute candles (~288 candles)
+    - days=7: 5-minute candles (~2016 candles)
+    - days=14: 5-minute candles (~4032 candles)
+    - days=30+: Daily candles (fewer data points)
     """
     # Validate days parameter
     valid_days = [1, 7, 14, 30, 90, 180, 365, "max"]
+    original_days = days
     if days not in valid_days:
         # Round to nearest valid value
         if days < 1:
@@ -41,27 +48,45 @@ def fetch_ohlcv(coin_id="bitcoin", days=1):
             days = 180
         else:
             days = 365
-        print(f"Warning: Adjusted days parameter to {days} (CoinGecko API requirement)")
+        if original_days != days:
+            print(f"Warning: Adjusted days parameter from {original_days} to {days} (CoinGecko API requirement)")
+    
+    # Warn about daily candles for longer periods
+    if days >= 30:
+        print(f"Note: {days} days will return daily candles (not 5-minute). For more data, use days=7 or days=14.")
     
     url = f"{COINGECKO_API}/coins/{coin_id}/ohlc"
     params = {"vs_currency": "usd", "days": days}
     
-    print(f"Fetching {days} days of {coin_id} data from CoinGecko...")
-    response = requests.get(url, params=params, timeout=30)
+    # Retry logic for rate limits
+    for attempt in range(max_retries):
+        print(f"Fetching {days} days of {coin_id} data from CoinGecko... (attempt {attempt + 1}/{max_retries})")
+        response = requests.get(url, params=params, timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"✅ Fetched {len(data)} candles")
+            return data
+        elif response.status_code == 429:
+            # Rate limit - wait and retry
+            wait_time = (2 ** attempt) * 5  # Exponential backoff: 5s, 10s, 20s
+            if attempt < max_retries - 1:
+                print(f"⚠️  Rate limit hit (429). Waiting {wait_time} seconds before retry...")
+                time.sleep(wait_time)
+            else:
+                error_msg = "Rate limit exceeded. Please wait a few minutes and try again, or use a CoinGecko API key."
+                raise Exception(error_msg)
+        else:
+            error_msg = f"API error: {response.status_code}"
+            try:
+                error_data = response.json()
+                if "error" in error_data:
+                    error_msg += f" - {error_data['error']}"
+            except:
+                error_msg += f" - {response.text[:200]}"
+            raise Exception(error_msg)
     
-    if response.status_code != 200:
-        error_msg = f"API error: {response.status_code}"
-        try:
-            error_data = response.json()
-            if "error" in error_data:
-                error_msg += f" - {error_data['error']}"
-        except:
-            error_msg += f" - {response.text[:200]}"
-        raise Exception(error_msg)
-    
-    data = response.json()
-    print(f"Fetched {len(data)} candles")
-    return data
+    raise Exception("Failed to fetch data after retries")
 
 def calculate_returns(prices, window):
     """Calculate returns over a window"""
@@ -187,8 +212,13 @@ def train_model(days=1):
     print(f"Valid samples: {len(X)}")
     print(f"Positive labels: {np.sum(y)} ({np.mean(y)*100:.1f}%)")
     
-    if len(X) < 100:
-        raise Exception("Not enough data for training")
+    # Minimum samples requirement (lowered for flexibility)
+    min_samples = 50
+    if len(X) < min_samples:
+        raise Exception(
+            f"Not enough data for training. Got {len(X)} samples, need at least {min_samples}.\n"
+            f"💡 Tip: Use days=7 or days=14 for more 5-minute candles (e.g., 'python train.py 7')"
+        )
     
     # Standardize features
     print("\nStandardizing features...")
@@ -242,10 +272,17 @@ if __name__ == "__main__":
             print(f"Warning: Invalid days parameter '{sys.argv[1]}', using default: 1")
             days = 1
     
+    print("\n💡 Recommended: Use days=7 or days=14 for best results (more 5-minute candles)")
+    print("   Example: python train.py 7\n")
+    
     try:
         train_model(days=days)
     except Exception as e:
         print(f"\n❌ Error: {e}")
+        print("\n💡 Troubleshooting:")
+        print("   - Rate limit (429): Wait a few minutes and try again")
+        print("   - Not enough data: Try 'python train.py 7' or 'python train.py 14'")
+        print("   - API errors: Check your internet connection")
         import traceback
         traceback.print_exc()
         exit(1)
