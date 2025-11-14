@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/metrics",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
+
